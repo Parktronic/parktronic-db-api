@@ -1,0 +1,2 @@
+curl localhost:8000/parking_lot -X POST -H "Content-Type: application/json" -d @samples/from_detector.json
+curl localhost:8000/parking_lots -H "Content-Type: application/json"
