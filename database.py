@@ -83,16 +83,23 @@ class ParktronicDatabase:
                     free_places = []
                 else:
                     free_places = json.loads(row[2])
-                result_rows.append({"coordinates": row[0],
-                                    "capacity": row[1],
-                                    "free_places": free_places})
+
+                try:
+                    json.loads(row[0])
+                except Exception:
+                    row_coordinates = []
+                else:
+                    row_coordinates = json.loads(row[0])
+
+                result_rows.append({"coords": row_coordinates,
+                                    "number": row[1],
+                                    "free_spaces": free_places})
+
             result.append({"id": parking_lot[0],
-                           "coordinates": coordinates[0][0],
+                           "coords": coordinates, # Changed (was coordinates[0][0])
                            "description": parking_lot[2],
-                           "city": parking_lot[3],
-                           "street": parking_lot[4],
-                           "house": str(parking_lot[5]),
-                           "rows": result_rows})
+                           "address": parking_lot[3] + ', ' + parking_lot[4] + ', ' + str(parking_lot[5]),
+                           "parking_rows": result_rows})
 
         return result
 
