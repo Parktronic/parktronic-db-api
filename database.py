@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 import json
 import psycopg2
-from models import ParkingLot, View, Rows
+from models import ParkingLot, View, Rows, User
 
 
 class PostgresConnector:
@@ -53,11 +53,13 @@ class ParktronicDatabase:
                                                     hostaddr,
                                                     port)
 
-    def select_parking_lots(self) -> List[Dict[str, Any]]:
+    def select_parking_lots(self) -> Dict[str, List[Dict[str, Any]]]:
         result = []
+
         parking_lots = self.query_executor.execute("""
                                                    select * from parking_lots;
                                                    """)
+
         for parking_lot in parking_lots:
             try:
                 json.loads(parking_lot[1])
@@ -65,35 +67,44 @@ class ParktronicDatabase:
                 coordinates = []
             else:
                 coordinates = json.loads(parking_lot[1])
-            view_id = self.query_executor.execute(f"""
-                                                  select id
+
+            views = self.query_executor.execute(f"""
+                                                  select id, camera
                                                   from views
                                                   where parking_lot_id = {parking_lot[0]}
-                                                  """)[0][0]  # Предполагаем, что один вид
-            rows = self.query_executor.execute(f"""
-                                               select coordinates, capacity, free_places
-                                               from rows
-                                               where view_id = {view_id}
-                                               """)
+                                                  """)
+
             result_rows = []
-            for row in rows:
-                try:
-                    json.loads(row[2])
-                except:
-                    free_places = []
-                else:
-                    free_places = json.loads(row[2])
 
-                try:
-                    json.loads(row[0])
-                except Exception:
-                    row_coordinates = []
-                else:
-                    row_coordinates = json.loads(row[0])
+            for view in views:
+                view_id = view[0]
 
-                result_rows.append({"coords": row_coordinates,
-                                    "number": row[1],
-                                    "free_spaces": free_places})
+                rows = self.query_executor.execute(f"""
+                                                select coordinates, capacity, free_places
+                                                from rows
+                                                where view_id = {view_id}
+                                                """)
+
+                for row in rows:
+                    # Convert rows from str to list
+                    try:
+                        json.loads(row[0])
+                    except Exception:
+                        row_coordinates = []
+                    else:
+                        row_coordinates = json.loads(row[0])
+
+                    # Convert free_places from str to list
+                    try:
+                        json.loads(row[2])
+                    except:
+                        free_places = []
+                    else:
+                        free_places = json.loads(row[2])
+
+                    result_rows.append({"coords": row_coordinates,
+                                        "number": row[1],
+                                        "free_spaces": free_places})
 
             result.append({"id": parking_lot[0],
                            "coords": coordinates, # Changed (was coordinates[0][0])
@@ -101,7 +112,7 @@ class ParktronicDatabase:
                            "address": parking_lot[3] + ', ' + parking_lot[4] + ', ' + str(parking_lot[5]),
                            "parking_rows": result_rows})
 
-        return result
+        return {"parkings": result}
 
     def update_parking_lot(self, data: ParkingLot) -> int:
         if data.id is None:
@@ -156,3 +167,30 @@ class ParktronicDatabase:
                                                 {row.capacity},
                                                '{row.free_places}')
                                         """)
+
+    def insert_user(self, user: User) -> int:
+        return self.query_executor.execute(f"""
+                                           insert into users
+                                           (email, password)
+                                           values ('{user.email}',
+                                                   '{user.password}')
+                                           returning id;
+                                           """)[0][0]
+
+    def select_user(self, user: User) -> int:
+        result = self.query_executor.execute(f"""
+                                            select * from users
+                                            where email = '{user.email}' and password = '{user.password}'
+                                            """)
+        if result != []:
+            return result[0][0]
+        return result
+
+    def select_user_by_email(self, user: User) -> int:
+        result = self.query_executor.execute(f"""
+                                            select * from users
+                                            where email = '{user.email}'
+                                            """)
+        if result != []:
+            return result[0][0]
+        return result

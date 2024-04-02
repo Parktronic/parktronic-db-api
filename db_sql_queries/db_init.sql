@@ -23,3 +23,15 @@ CREATE TABLE rows (
     free_places TEXT,
     last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR NOT NULL,
+    password VARCHAR NOT NULL
+);
+
+CREATE TABLE favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    parking_lot_id INTEGER REFERENCES parking_lots(id) ON DELETE CASCADE
+);

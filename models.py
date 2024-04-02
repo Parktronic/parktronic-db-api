@@ -38,3 +38,8 @@ class ParkingInfo(ParkingLot, View, Rows):
 
 class ParkingID(BaseModel):
     id: int
+
+
+class User(BaseModel):
+    email: str
+    password: str

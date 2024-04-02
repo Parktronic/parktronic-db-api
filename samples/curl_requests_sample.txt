@@ -1,2 +1,7 @@
 curl localhost:8000/parking_lot -X POST -H "Content-Type: application/json" -d @samples/from_detector.json
 curl localhost:8000/parking_lots -H "Content-Type: application/json"
+curl localhost:8000/signup -X POST -H "Content-Type: application/json" -d @samples/signup_sample.json
+curl localhost:8000/login -X POST -H "Content-Type: application/json" -d @samples/signup_sample.json
+
+curl --cookie-jar cookies.txt localhost:8000/login -X POST -H "Content-Type: application/json" -d @samples/signup_sample.json
+curl -b cookies.txt localhost:8000/login -X POST -H "Content-Type: application/json" -d @samples/signup_sample.json
