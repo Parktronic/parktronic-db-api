@@ -16,7 +16,7 @@ database = ParktronicDatabase("parktronic",
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8080"],
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
     allow_headers=["Content-Type",
@@ -94,6 +94,8 @@ def post_login(user: User, request: Request, response: Response):
 
 @app.get("/is_authorized")
 def get_is_authorized(request: Request, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
     print(cookies)
 
     if "session_id" not in request.cookies:
@@ -113,6 +115,8 @@ def get_is_authorized(request: Request, response: Response):
 
 @app.get("/logout")
 def get_logout(request: Request, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
     if "session_id" not in request.cookies:
         raise HTTPException(401, "User not found")
 
