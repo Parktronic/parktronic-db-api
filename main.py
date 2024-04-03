@@ -15,12 +15,17 @@ database = ParktronicDatabase("parktronic",
                               "5432")
 app = FastAPI()
 app.add_middleware(
-  CORSMiddleware,
-  allow_origins=["*"],
-  allow_credentials=True,
-  allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
-  allow_headers=["*"]
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
+    allow_headers=["Content-Type",
+                    "Set-Cookie",
+                    "Access-Control-Allow-Headers",
+                    "Access-Control-Allow-Origin",
+                    "Authorization"]
 )
+CORS_HEADER = "http://localhost:8080"
 
 
 @app.post("/parking_lot")
@@ -44,7 +49,7 @@ def random_cookie(length=10) -> str:
 
 @app.post("/signup")
 def post_signup(user: UserSignup, request: Request, response: Response):
-    response.headers["Access-Control-Allow-Origin"] = "http://localhost:8080"
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     if database.select_user_by_email(user) != []:
         return {"message": "You're already registered"}
@@ -63,6 +68,8 @@ def post_signup(user: UserSignup, request: Request, response: Response):
 
 @app.post("/login")
 def post_login(user: User, request: Request, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
     if database.select_user(user) == []:
         raise HTTPException(404, "User not found")
 
