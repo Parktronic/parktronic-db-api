@@ -20,16 +20,18 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
     allow_headers=["Content-Type",
-                    "Set-Cookie",
-                    "Access-Control-Allow-Headers",
-                    "Access-Control-Allow-Origin",
-                    "Authorization"]
+                   "Set-Cookie",
+                   "Access-Control-Allow-Headers",
+                   "Access-Control-Allow-Origin",
+                   "Authorization"]
 )
 CORS_HEADER = "http://localhost:8080"
 
 
 @app.post("/parking_lot")
-def post_parking_lot(data: ParkingInfo) -> ParkingID:
+def post_parking_lot(data: ParkingInfo, response: Response) -> ParkingID:
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
     parking_lot_id = database.update_parking_lot(data.parking_lot())
     view_id = database.update_view(parking_lot_id, data.view())
     database.update_rows(view_id, data.rows)
@@ -37,7 +39,9 @@ def post_parking_lot(data: ParkingInfo) -> ParkingID:
 
 
 @app.get("/parking_lots")
-def get_parking_lots() -> Dict[str, List[Dict[str, Any]]]:
+def get_parking_lots(response: Response) -> Dict[str, List[Dict[str, Any]]]:
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
     return database.select_parking_lots()
 
 
