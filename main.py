@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, Response, HTTPException
 from models import ParkingInfo, ParkingID, User
 from database import ParktronicDatabase
 from datetime import datetime, timedelta, timezone
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 
 
 database = ParktronicDatabase("parktronic",
@@ -14,13 +14,13 @@ database = ParktronicDatabase("parktronic",
                               "127.0.0.1",
                               "5432")
 app = FastAPI()
-app.add_middleware(
-  CORSMiddleware,
-  allow_origins=["*"],
-  allow_credentials=True,
-  allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
-  allow_headers=["*"]
-)
+# app.add_middleware(
+#   CORSMiddleware,
+#   allow_origins=["*"],
+#   allow_credentials=True,
+#   allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
+#   allow_headers=["*"]
+# )
 cookies = {}
 
 
