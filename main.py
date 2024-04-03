@@ -69,7 +69,12 @@ def post_signup(user: UserSignup, request: Request, response: Response):
                             httponly=True)
         cookies[cookie] = user_id
 
-    return {"message": "Successfully registered"}
+    user = database.select_by_id(user_id)
+
+    return UserSignup(email=user[1],
+                      first_name=user[2],
+                      username=user[3],
+                      password=user[4])
 
 
 @app.post("/login")
@@ -89,7 +94,12 @@ def post_login(user: User, request: Request, response: Response):
                             httponly=True)
         cookies[cookie] = user_id
 
-    return {"message": "Successfully logged in"}
+    user = database.select_by_id(user_id)
+
+    return UserSignup(email=user[1],
+                      first_name=user[2],
+                      username=user[3],
+                      password=user[4])
 
 
 @app.get("/is_authorized")
