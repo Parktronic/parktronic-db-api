@@ -1,3 +1,4 @@
+import os
 import random
 import string
 from typing import List, Dict, Any
@@ -6,13 +7,25 @@ from models import ParkingInfo, ParkingID, User
 from database import ParktronicDatabase
 from datetime import datetime, timedelta, timezone
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from pathlib import Path
 
 
-database = ParktronicDatabase("parktronic",
-                              "postgres",
-                              "postgres",
-                              "127.0.0.1",
-                              "5432")
+load_dotenv()
+
+BASE_DIR = Path(__file__).parent
+
+DB_NAME: str = os.getenv("DB_NAME")
+DB_USER: str = os.getenv("DB_USER")
+DB_PASS: str = os.getenv("DB_PASS")
+DB_HOST: str = os.getenv("DB_HOST")
+DB_PORT: int = os.getenv("DB_PORT")
+
+database = ParktronicDatabase(DB_NAME,
+                              DB_USER,
+                              DB_PASS,
+                              DB_HOST,
+                              DB_PORT)
 app = FastAPI()
 app.add_middleware(
   CORSMiddleware,
