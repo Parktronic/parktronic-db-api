@@ -196,3 +196,10 @@ class ParktronicDatabase:
         if result != []:
             return result[0][0]
         return result
+
+    def select_by_id(self, id: int) -> tuple:
+        result = self.query_executor.execute(f"""
+                                            select * from users
+                                            where id = '{id}'
+                                            """)[0]
+        return result

@@ -26,6 +26,7 @@ app.add_middleware(
                    "Authorization"]
 )
 CORS_HEADER = "http://localhost:8080"
+cookies = {}
 
 
 @app.post("/parking_lot")
@@ -58,7 +59,7 @@ def post_signup(user: UserSignup, request: Request, response: Response):
     if database.select_user_by_email(user) != []:
         return {"message": "You're already registered"}
 
-    database.insert_user(user)
+    user_id = database.insert_user(user)
 
     if "session_id" not in request.cookies:
         cookie = random_cookie()
@@ -66,6 +67,7 @@ def post_signup(user: UserSignup, request: Request, response: Response):
                             value=cookie,
                             expires=2500,
                             httponly=True)
+        cookies[cookie] = user_id
 
     return {"message": "Successfully registered"}
 
@@ -74,7 +76,9 @@ def post_signup(user: UserSignup, request: Request, response: Response):
 def post_login(user: User, request: Request, response: Response):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    if database.select_user(user) == []:
+    user_id = database.select_user(user)
+
+    if user_id == []:
         raise HTTPException(404, "User not found")
 
     if "session_id" not in request.cookies:
@@ -83,5 +87,39 @@ def post_login(user: User, request: Request, response: Response):
                             value=cookie,
                             expires=2500,
                             httponly=True)
+        cookies[cookie] = user_id
 
     return {"message": "Successfully logged in"}
+
+
+@app.get("/is_authorized")
+def get_is_authorized(request: Request, response: Response):
+    print(cookies)
+
+    if "session_id" not in request.cookies:
+        raise HTTPException(401, "User not found")
+
+    cookie = request.cookies["session_id"]
+
+    user_id = cookies[cookie]
+
+    user = database.select_by_id(user_id)
+
+    return UserSignup(email=user[1],
+                      first_name=user[2],
+                      username=user[3],
+                      password=user[4])
+
+
+@app.get("/logout")
+def get_logout(request: Request, response: Response):
+    if "session_id" not in request.cookies:
+        raise HTTPException(401, "User not found")
+
+    response.delete_cookie("session_id")
+
+    cookie = request.cookies["session_id"]
+
+    del cookies[cookie]
+
+    return {"message": "Successfully logged out"}
