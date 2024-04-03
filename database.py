@@ -171,8 +171,10 @@ class ParktronicDatabase:
     def insert_user(self, user: User) -> int:
         return self.query_executor.execute(f"""
                                            insert into users
-                                           (email, password)
+                                           (email, first_name, username, password)
                                            values ('{user.email}',
+                                                   '{user.first_name}',
+                                                   '{user.username}',
                                                    '{user.password}')
                                            returning id;
                                            """)[0][0]

@@ -2,7 +2,7 @@ import random
 import string
 from typing import List, Dict, Any
 from fastapi import FastAPI, Request, Response, HTTPException
-from models import ParkingInfo, ParkingID, User
+from models import ParkingInfo, ParkingID, User, UserSignup
 from database import ParktronicDatabase
 from datetime import datetime, timedelta, timezone
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,7 +43,9 @@ def random_cookie(length=10) -> str:
 
 
 @app.post("/signup")
-def post_signup(user: User, request: Request, response: Response):
+def post_signup(user: UserSignup, request: Request, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:8080"
+
     if database.select_user_by_email(user) != []:
         return {"message": "You're already registered"}
 
