@@ -197,9 +197,30 @@ class ParktronicDatabase:
             return result[0][0]
         return result
 
-    def select_by_id(self, id: int) -> tuple:
+    def select_user_by_id(self, id: int) -> tuple:
         result = self.query_executor.execute(f"""
                                             select * from users
                                             where id = '{id}'
-                                            """)[0]
+                                            """)
+        if result != []:
+            return result[0]
+        return result
+
+    def insert_favorite(self, user_id: int, parking_lot_id: int) -> int:
+        return self.query_executor.execute(f"""
+                                            insert into favorites
+                                            (user_id, parking_lot_id)
+                                            values ({user_id},
+                                                    {parking_lot_id})
+                                            returning id;
+                                            """)[0][0]
+
+    def select_favorites(self, user_id: int) -> tuple:
+        result = self.query_executor.execute(f"""
+                                            select parking_lot_id
+                                            from favorites
+                                            where user_id = {user_id}
+                                            """)
+        if result != []:
+            return result[0]
         return result

@@ -48,3 +48,8 @@ class User(BaseModel):
 class UserSignup(User):
     first_name: str
     username: str
+    parkings: Optional[list]
+
+
+class ParkingLotID(BaseModel):
+    parking_lot_id: int
