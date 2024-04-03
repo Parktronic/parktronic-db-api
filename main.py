@@ -2,7 +2,7 @@ import random
 import string
 from typing import List, Dict, Any
 from fastapi import FastAPI, Request, Response, HTTPException
-from models import ParkingInfo, ParkingID, User, UserSignup, ParkingLotID
+from models import ParkingInfo, ParkingID, User, UserSignup, ParkingLotID, UserParkings
 from database import ParktronicDatabase
 from datetime import datetime, timedelta, timezone
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,7 +73,7 @@ def post_signup(user: UserSignup, request: Request, response: Response):
 
     parkings = database.select_favorites(user_id)
 
-    return UserSignup(email=user[1],
+    return UserParkings(email=user[1],
                       first_name=user[2],
                       username=user[3],
                       password=user[4],
@@ -101,7 +101,7 @@ def post_login(user: User, request: Request, response: Response):
 
     parkings = database.select_favorites(user_id)
 
-    return UserSignup(email=user[1],
+    return UserParkings(email=user[1],
                       first_name=user[2],
                       username=user[3],
                       password=user[4],
@@ -125,7 +125,7 @@ def get_is_authorized(request: Request, response: Response):
 
     parkings = database.select_favorites(user_id)
 
-    return UserSignup(email=user[1],
+    return UserParkings(email=user[1],
                       first_name=user[2],
                       username=user[3],
                       password=user[4],
@@ -165,7 +165,7 @@ def post_favorite(parking_lot_id: ParkingLotID, request: Request, response: Resp
 
     parkings = database.select_favorites(user_id)
 
-    return UserSignup(email=user[1],
+    return UserParkings(email=user[1],
                       first_name=user[2],
                       username=user[3],
                       password=user[4],
