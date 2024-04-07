@@ -212,7 +212,7 @@ class ParktronicDatabase:
                                             (user_id, parking_lot_id)
                                             values ({user_id},
                                                     {parking_lot_id})
-                                            returning id;
+                                            returning id
                                             """)[0][0]
 
     def select_favorites(self, user_id: int) -> tuple:
@@ -224,3 +224,12 @@ class ParktronicDatabase:
         if result != []:
             return result[0]
         return result
+
+    def delete_favorite(self, user_id: int, parking_lot_id: int) -> int:
+        return self.query_executor.execute(f"""
+                                           delete
+                                           from favorites
+                                           where user_id = {user_id}
+                                           and parking_lot_id = {parking_lot_id}
+                                           returning id
+                                           """)

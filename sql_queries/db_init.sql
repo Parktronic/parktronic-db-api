@@ -4,7 +4,7 @@ CREATE DATABASE parktronic;
 
 CREATE TABLE parking_lots (
     id SERIAL PRIMARY KEY,
-    coordinates VARCHAR,
+    coordinates TEXT,
     description TEXT,
     city VARCHAR,
     street VARCHAR,

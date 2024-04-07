@@ -2,10 +2,9 @@ import random
 import string
 from typing import List, Dict, Any
 from fastapi import FastAPI, Request, Response, HTTPException
-from models import ParkingInfo, ParkingID, User, UserSignup, ParkingLotID, UserParkings
-from database import ParktronicDatabase
-from datetime import datetime, timedelta, timezone
 from fastapi.middleware.cors import CORSMiddleware
+from database import ParktronicDatabase
+from models import ParkingInfo, ParkingID, User, UserSignup, ParkingLotID, UserParkings
 
 
 database = ParktronicDatabase("parktronic",
@@ -57,7 +56,7 @@ def post_signup(user: UserSignup, request: Request, response: Response):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     if database.select_user_by_email(user) != []:
-        return {"message": "You're already registered"}
+        return {"message": "User already registered"}
 
     user_id = database.insert_user(user)
 
@@ -74,10 +73,10 @@ def post_signup(user: UserSignup, request: Request, response: Response):
     parkings = database.select_favorites(user_id)
 
     return UserParkings(email=user[1],
-                      first_name=user[2],
-                      username=user[3],
-                      password=user[4],
-                      parkings=parkings)
+                        first_name=user[2],
+                        username=user[3],
+                        password=user[4],
+                        parkings=parkings)
 
 
 @app.post("/login")
@@ -102,10 +101,10 @@ def post_login(user: User, request: Request, response: Response):
     parkings = database.select_favorites(user_id)
 
     return UserParkings(email=user[1],
-                      first_name=user[2],
-                      username=user[3],
-                      password=user[4],
-                      parkings=parkings)
+                        first_name=user[2],
+                        username=user[3],
+                        password=user[4],
+                        parkings=parkings)
 
 
 @app.get("/is_authorized")
@@ -115,7 +114,7 @@ def get_is_authorized(request: Request, response: Response):
     print(cookies)
 
     if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not found")
+        raise HTTPException(401, "User not authorized")
 
     cookie = request.cookies["session_id"]
 
@@ -126,18 +125,18 @@ def get_is_authorized(request: Request, response: Response):
     parkings = database.select_favorites(user_id)
 
     return UserParkings(email=user[1],
-                      first_name=user[2],
-                      username=user[3],
-                      password=user[4],
-                      parkings=parkings)
+                        first_name=user[2],
+                        username=user[3],
+                        password=user[4],
+                        parkings=parkings)
 
 
-@app.get("/logout")
-def get_logout(request: Request, response: Response):
+@app.post("/logout")
+def post_logout(request: Request, response: Response):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not found")
+        raise HTTPException(401, "User not authorized")
 
     response.delete_cookie("session_id")
 
@@ -159,14 +158,38 @@ def post_favorite(parking_lot_id: ParkingLotID, request: Request, response: Resp
 
     user_id = cookies[cookie]
 
-    result = database.insert_favorite(user_id, parking_lot_id.parking_lot_id)
+    database.insert_favorite(user_id, parking_lot_id.parking_lot_id)
 
     user = database.select_user_by_id(user_id)
 
     parkings = database.select_favorites(user_id)
 
     return UserParkings(email=user[1],
-                      first_name=user[2],
-                      username=user[3],
-                      password=user[4],
-                      parkings=parkings)
+                        first_name=user[2],
+                        username=user[3],
+                        password=user[4],
+                        parkings=parkings)
+
+
+@app.delete("/favorite")
+def delete_favorite(parking_lot_id: ParkingLotID, request: Request, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if "session_id" not in request.cookies:
+        raise HTTPException(401, "User not found")
+    
+    cookie = request.cookies["session_id"]
+
+    user_id = cookies[cookie]
+
+    database.delete_favorite(user_id, parking_lot_id.parking_lot_id)
+
+    user = database.select_user_by_id(user_id)
+
+    parkings = database.select_favorites(user_id)
+
+    return UserParkings(email=user[1],
+                        first_name=user[2],
+                        username=user[3],
+                        password=user[4],
+                        parkings=parkings)
