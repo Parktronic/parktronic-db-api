@@ -56,7 +56,7 @@ def post_signup(user: UserSignup, request: Request, response: Response):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     if database.select_user_by_email(user) != []:
-        return {"message": "User already registered"}
+        raise HTTPException(409, "User already registered")
 
     user_id = database.insert_user(user)
 
