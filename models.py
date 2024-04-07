@@ -1,58 +1,65 @@
-from typing import List, Optional
-from pydantic import BaseModel
+from sqlalchemy import Text, Column, ForeignKey, Integer, String, TIMESTAMP
+from sqlalchemy.orm import relationship
+
+from database import Base
 
 
-class ParkingLot(BaseModel):
-    id: Optional[int]
-    coordinates: str  # Заменить на массив
-    description: str
-    city: str
-    street: str
-    house: str
+class ParkingLot(Base):
+    __tablename__ = "parking_lots"
+
+    id = Column(Integer, primary_key=True)
+    coordinates = Column(Text)  # Заменить на массив
+    description = Column(Text)
+    city = Column(String)
+    street = Column(String)
+    house = Column(Integer)
+
+    views = relationship("View", back_populates="parking_lot")
+    favorites = relationship("Favorite", back_populates="parking_lot")
 
 
-class View(BaseModel):
-    camera: int
+class View(Base):
+    __tablename__ = "views"
+
+    id = Column(Integer, primary_key=True)
+    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"))
+    camera = Column(Integer)
+
+    parking_lot = relationship("ParkingLot", back_populates="views")
+    rows = relationship("Row", back_populates="view")
 
 
-class Row(BaseModel):
-    coordinates: str  # Заменить на массив
-    capacity: int
-    free_places: List[int]
+class Row(Base):
+    __tablename__ = "rows"
+
+    id = Column(Integer, primary_key=True)
+    view_id = Column(Integer, ForeignKey("views.id", ondelete="CASCADE"))
+    coordinates = Column(Text)
+    capacity = Column(Integer)
+    free_places = Column(Text)
+    last_updated = Column(TIMESTAMP, server_default="CURRENT_TIMESTAMP")
+
+    view = relationship("View", back_populates="rows")
 
 
-class Rows(BaseModel):
-    rows: List[Row]
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String, nullable=False)
+    first_name = Column(String, nullable=False)
+    username = Column(String, nullable=False)
+    password = Column(String, nullable=False)
+
+    favorites = relationship("Favorite", back_populates="user")
 
 
-class ParkingInfo(ParkingLot, View, Rows):
-    def parking_lot(self) -> ParkingLot:
-        return ParkingLot(**self.dict())  # Устаревший метод
+class Favorite(Base):
+    __tablename__ = "favorites"
 
-    def view(self) -> View:
-        return View(**self.dict())
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"))
 
-    def rows(self) -> Rows:
-        return Rows(**self.dict())
-
-
-class ParkingID(BaseModel):
-    id: int
-
-
-class User(BaseModel):
-    email: str
-    password: str
-
-
-class UserSignup(User):
-    first_name: str
-    username: str
-
-
-class ParkingLotID(BaseModel):
-    parking_lot_id: int
-
-
-class UserParkings(UserSignup):
-    parkings: List[int]
+    user = relationship("User", back_populates="favorites")
+    parking_lot = relationship("ParkingLot", back_populates="favorites")
