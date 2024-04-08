@@ -8,7 +8,18 @@ class Row(BaseModel):
     free_places: List[int]
 
 
-class ParkingLot(BaseModel):
+class ParkingLotResponse(BaseModel):
+    id: int
+    coordinates: List[float]
+    description: str
+    city: str
+    street: str
+    house: int
+    # camera: int
+    rows: List[Row]
+
+
+class ParkingLotRequest(BaseModel):
     id: Optional[int]
     coordinates: List[float]
     description: str
@@ -20,7 +31,7 @@ class ParkingLot(BaseModel):
 
 
 class ParkingLots(BaseModel):
-    parking_lots: List[ParkingLot]
+    parking_lots: List[ParkingLotResponse]
 
 
 class UserPassword(BaseModel):

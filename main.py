@@ -3,7 +3,7 @@ import string
 from typing import List, Dict, Any
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from schemas import ParkingLot, ParkingLots, UserLogin, UserSignup, User, ID
+from schemas import ParkingLotRequest, ParkingLots, UserLogin, UserSignup, User, ID
 from database import SessionLocal, engine
 import crud, models, schemas
 from sqlalchemy.orm import Session
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 CORS_HEADER = "http://localhost:8080"
 
+cookies = {}
 
 def get_db():
     db = SessionLocal()
@@ -33,15 +34,127 @@ def get_db():
         db.close()
 
 
+def random_cookie(length=10) -> str:
+    characters = string.ascii_letters + string.digits
+    cookie_value = ''.join(random.choice(characters) for i in range(length))
+    return cookie_value
+
+
 @app.get("/parking_lots", response_model=ParkingLots)
 def get_parking_lots(response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    return crud.get_parking_lots(db)
+    return crud.select_parking_lots(db)
 
 
 @app.post("/parking_lot", response_model=ID)
-def post_parking_lot(parking_lot: ParkingLot, response: Response, db: Session = Depends(get_db)):
+def update_parking_lot(parking_lot: ParkingLotRequest, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    return crud.update_parking_lot(db, parking_lot)
+    return crud.insert_or_update_parking_lot(db, parking_lot)
+
+
+@app.post("/signup", response_model=User)
+def sign_up(user: UserSignup, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if crud.select_user_by_email(db, user.email) is not None:
+        raise HTTPException(409)
+
+    user_id = crud.insert_user(db, user)
+
+    if "session_id" in request.cookies:
+        cookie_value = request.cookies["session_id"]
+        if cookie_value in cookies.keys():
+            del cookies[cookie_value]
+
+    cookie = random_cookie()
+    response.set_cookie(key="session_id",
+                        value=cookie,
+                        expires=2500,
+                        httponly=True)
+    cookies[cookie] = user_id
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    print(cookies)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": user_db.favorites
+    }
+
+
+@app.post("/login", response_model=User)
+def log_in(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    user_db = crud.select_user_by_email_and_password(db, user.email, user.password)
+
+    if user_db is None:
+        raise HTTPException(404)
+
+    if "session_id" in request.cookies:
+        cookie_value = request.cookies["session_id"]
+        if cookie_value in cookies.keys():
+            del cookies[cookie_value]
+
+    cookie = random_cookie()
+    response.set_cookie(key="session_id",
+                        value=cookie,
+                        expires=2500,
+                        httponly=True)
+    cookies[cookie] = user_db.id
+
+    print(cookies)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": user_db.favorites
+    }
+
+
+@app.get("/is_authorized", response_model=User)
+def is_user_authorized(request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    user_id = cookies[request.cookies["session_id"]]
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    print(cookies)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": user_db.favorites
+    }
+
+
+@app.post("/logout")
+def log_out(request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    cookie_value = request.cookies["session_id"]
+    if cookie_value in cookies.keys():
+        del cookies[cookie_value]
+
+    print(cookies)
+
+    response.delete_cookie("session_id")
+
+
+# @app.post("/favorite", response_model=User)
+# def add_favorite_parking_lot(parking_lot_id: int, request: Request, response: Response, db: Session = Depends(get_db)):
+#     insert
