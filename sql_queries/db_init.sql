@@ -1,8 +1,10 @@
 CREATE DATABASE parktronic;
 
+\c parktronic
+
 CREATE TABLE parking_lots (
     id SERIAL PRIMARY KEY,
-    coordinates VARCHAR,
+    coordinates TEXT,
     description TEXT,
     city VARCHAR,
     street VARCHAR,
@@ -27,6 +29,8 @@ CREATE TABLE rows (
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR NOT NULL,
+    first_name VARCHAR NOT NULL,
+    username VARCHAR NOT NULL,
     password VARCHAR NOT NULL
 );
 

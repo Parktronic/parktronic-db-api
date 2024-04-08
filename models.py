@@ -43,3 +43,16 @@ class ParkingID(BaseModel):
 class User(BaseModel):
     email: str
     password: str
+
+
+class UserSignup(User):
+    first_name: str
+    username: str
+
+
+class ParkingLotID(BaseModel):
+    parking_lot_id: int
+
+
+class UserParkings(UserSignup):
+    parkings: List[int]

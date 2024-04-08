@@ -1,8 +1,12 @@
+# Ignore vscode
+.vscode/
+
 # Ignore venv
 venv
+env/
 
 # Ignore cache
-__pycache__
+__pycache__/
 
 # Ignore enviroment file
 .env

@@ -171,8 +171,10 @@ class ParktronicDatabase:
     def insert_user(self, user: User) -> int:
         return self.query_executor.execute(f"""
                                            insert into users
-                                           (email, password)
+                                           (email, first_name, username, password)
                                            values ('{user.email}',
+                                                   '{user.first_name}',
+                                                   '{user.username}',
                                                    '{user.password}')
                                            returning id;
                                            """)[0][0]
@@ -194,3 +196,40 @@ class ParktronicDatabase:
         if result != []:
             return result[0][0]
         return result
+
+    def select_user_by_id(self, id: int) -> tuple:
+        result = self.query_executor.execute(f"""
+                                            select * from users
+                                            where id = '{id}'
+                                            """)
+        if result != []:
+            return result[0]
+        return result
+
+    def insert_favorite(self, user_id: int, parking_lot_id: int) -> int:
+        return self.query_executor.execute(f"""
+                                            insert into favorites
+                                            (user_id, parking_lot_id)
+                                            values ({user_id},
+                                                    {parking_lot_id})
+                                            returning id
+                                            """)[0][0]
+
+    def select_favorites(self, user_id: int) -> tuple:
+        result = self.query_executor.execute(f"""
+                                            select parking_lot_id
+                                            from favorites
+                                            where user_id = {user_id}
+                                            """)
+        if result != []:
+            return result[0]
+        return result
+
+    def delete_favorite(self, user_id: int, parking_lot_id: int) -> int:
+        return self.query_executor.execute(f"""
+                                           delete
+                                           from favorites
+                                           where user_id = {user_id}
+                                           and parking_lot_id = {parking_lot_id}
+                                           returning id
+                                           """)
