@@ -38,3 +38,10 @@ def get_parking_lots(response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     return crud.get_parking_lots(db)
+
+
+@app.post("/parking_lot", response_model=ID)
+def post_parking_lot(parking_lot: ParkingLot, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    return crud.update_parking_lot(db, parking_lot)

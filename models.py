@@ -1,4 +1,4 @@
-from sqlalchemy import Text, Column, ForeignKey, Integer, String, TIMESTAMP
+from sqlalchemy import Text, Column, ForeignKey, Integer, String, TIMESTAMP, text, ARRAY, Float
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -8,7 +8,7 @@ class ParkingLot(Base):
     __tablename__ = "parking_lots"
 
     id = Column(Integer, primary_key=True)
-    coordinates = Column(Text)  # Заменить на массив
+    coordinates = Column(ARRAY(Float), nullable=False)
     description = Column(Text)
     city = Column(String)
     street = Column(String)
@@ -22,8 +22,8 @@ class View(Base):
     __tablename__ = "views"
 
     id = Column(Integer, primary_key=True)
-    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"))
-    camera = Column(Integer)
+    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"), nullable=False)
+    camera = Column(Integer, nullable=False)
 
     parking_lot = relationship("ParkingLot", back_populates="views")
     rows = relationship("Row", back_populates="view")
@@ -33,11 +33,13 @@ class Row(Base):
     __tablename__ = "rows"
 
     id = Column(Integer, primary_key=True)
-    view_id = Column(Integer, ForeignKey("views.id", ondelete="CASCADE"))
-    coordinates = Column(Text)
-    capacity = Column(Integer)
-    free_places = Column(Text)
-    last_updated = Column(TIMESTAMP, server_default="CURRENT_TIMESTAMP")
+    view_id = Column(Integer, ForeignKey("views.id", ondelete="CASCADE"), nullable=False)
+    coordinate_1 = Column(ARRAY(Float), nullable=False)
+    coordinate_2 = Column(ARRAY(Float), nullable=False)
+    coordinate_3 = Column(ARRAY(Float), nullable=False)
+    capacity = Column(Integer, nullable=False)
+    free_places = Column(ARRAY(Integer), nullable=False)
+    last_updated = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
     view = relationship("View", back_populates="rows")
 
@@ -58,8 +60,8 @@ class Favorite(Base):
     __tablename__ = "favorites"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    parking_lot_id = Column(Integer, ForeignKey("parking_lots.id", ondelete="CASCADE"), nullable=False)
 
     user = relationship("User", back_populates="favorites")
     parking_lot = relationship("ParkingLot", back_populates="favorites")

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class Row(BaseModel):
-    coordinates: List[float]
+    coordinates: List[List[float]]
     capacity: int
     free_places: List[int]
 
@@ -14,7 +14,7 @@ class ParkingLot(BaseModel):
     description: str
     city: str
     street: str
-    house: str
+    house: int
     camera: int
     rows: List[Row]
 
