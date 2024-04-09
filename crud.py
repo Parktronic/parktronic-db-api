@@ -21,14 +21,14 @@ def select_parking_lots(db: Session):
             rows = view.rows
             for row in rows:
                 result_rows.append({
-                    "coordinates": [row.coordinate_1, row.coordinate_2, row.coordinate_3],
+                    "coords": [row.coordinate_1, row.coordinate_2, row.coordinate_3],
                     "capacity": row.capacity,
                     "free_places": row.free_places
                 })
 
         result.append({
             "id": parking_lot.id,
-            "coordinates": parking_lot.coordinates,
+            "coords": parking_lot.coordinates,
             "description": parking_lot.description,
             "city": parking_lot.city,
             "street": parking_lot.street,
@@ -70,9 +70,9 @@ def insert_or_update_parking_lot(db: Session, parking_lot: schemas.ParkingLotReq
 
         for row in parking_lot.rows:
             row = models.Row(view_id=view.id,
-                             coordinate_1=row.coordinates[0],
-                             coordinate_2=row.coordinates[1],
-                             coordinate_3=row.coordinates[2],
+                             coordinate_1=row.coords[0],
+                             coordinate_2=row.coords[1],
+                             coordinate_3=row.coords[2],
                              capacity=row.capacity,
                              free_places=row.free_places,
                              last_updated=datetime.utcnow())

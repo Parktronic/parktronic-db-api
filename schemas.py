@@ -3,14 +3,14 @@ from pydantic import BaseModel
 
 
 class Row(BaseModel):
-    coordinates: List[List[float]]
+    coords: List[List[float]]
     capacity: int
     free_places: List[int]
 
 
 class ParkingLotResponse(BaseModel):
     id: int
-    coordinates: List[float]
+    coords: List[float]
     description: str
     city: str
     street: str
@@ -21,7 +21,7 @@ class ParkingLotResponse(BaseModel):
 
 class ParkingLotRequest(BaseModel):
     id: Optional[int]
-    coordinates: List[float]
+    coords: List[float]
     description: str
     city: str
     street: str
