@@ -23,9 +23,10 @@ class ParkingLotRequest(BaseModel):
     id: Optional[int]
     coords: List[float]
     description: str
-    city: str
-    street: str
-    house: int
+    # city: str
+    # street: str
+    # house: int
+    address: str
     camera: int
     rows: List[Row]
 
