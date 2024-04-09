@@ -123,4 +123,20 @@ def select_user_by_email_and_password(db: Session, email: str, password: str):
     return user_db
 
 
-# def insert_parking_lot
+def insert_favorite(db: Session, user_id: int, parking_lot_id: int):
+    favorite_db = models.Favorite(
+        user_id=user_id,
+        parking_lot_id=parking_lot_id
+    )
+
+    db.add(favorite_db)
+    db.commit()
+
+
+def delete_favorite(db: Session, user_id: int, parking_lot_id: int):
+    favorite_db = db.query(models.Favorite) \
+                    .filter_by(user_id=user_id, parking_lot_id=parking_lot_id) \
+                    .first()
+
+    db.delete(favorite_db)
+    db.commit()

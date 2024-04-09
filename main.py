@@ -83,7 +83,7 @@ def sign_up(user: UserSignup, request: Request, response: Response, db: Session 
         "email": user_db.email,
         "first_name": user_db.first_name,
         "username": user_db.username,
-        "parking_lots": user_db.favorites
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
     }
 
 
@@ -114,7 +114,7 @@ def log_in(user: UserLogin, request: Request, response: Response, db: Session = 
         "email": user_db.email,
         "first_name": user_db.first_name,
         "username": user_db.username,
-        "parking_lots": user_db.favorites
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
     }
 
 
@@ -135,7 +135,7 @@ def is_user_authorized(request: Request, response: Response, db: Session = Depen
         "email": user_db.email,
         "first_name": user_db.first_name,
         "username": user_db.username,
-        "parking_lots": user_db.favorites
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
     }
 
 
@@ -155,6 +155,43 @@ def log_out(request: Request, response: Response, db: Session = Depends(get_db))
     response.delete_cookie("session_id")
 
 
-# @app.post("/favorite", response_model=User)
-# def add_favorite_parking_lot(parking_lot_id: int, request: Request, response: Response, db: Session = Depends(get_db)):
-#     insert
+@app.post("/favorite", response_model=User)
+def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    user_id = cookies[request.cookies["session_id"]]
+
+    crud.insert_favorite(db, user_id, parking_lot_id.id)
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
+
+
+@app.delete("/favorite", response_model=User)
+def delete_favorite(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    user_id = cookies[request.cookies["session_id"]]
+
+    crud.delete_favorite(db, user_id, parking_lot_id.id)
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
