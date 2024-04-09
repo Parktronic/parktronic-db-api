@@ -134,6 +134,12 @@ def insert_favorite(db: Session, user_id: int, parking_lot_id: int):
     db.commit()
 
 
+def select_favorite(db: Session, user_id: int, parking_lot_id: int):
+    return db.query(models.Favorite) \
+             .filter_by(user_id=user_id, parking_lot_id=parking_lot_id) \
+             .first()
+
+
 def delete_favorite(db: Session, user_id: int, parking_lot_id: int):
     favorite_db = db.query(models.Favorite) \
                     .filter_by(user_id=user_id, parking_lot_id=parking_lot_id) \

@@ -164,6 +164,9 @@ def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Res
 
     user_id = cookies[request.cookies["session_id"]]
 
+    if crud.select_favorite(db, user_id, parking_lot_id.id) is not None:
+        raise HTTPException(422)
+
     crud.insert_favorite(db, user_id, parking_lot_id.id)
 
     user_db = crud.select_user_by_id(db, user_id)
