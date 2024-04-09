@@ -33,7 +33,7 @@ def select_parking_lots(db: Session):
             # "city": parking_lot.city,
             # "street": parking_lot.street,
             # "house": parking_lot.house,
-            "address": parking_lot.city + ", " + parking_lot.street + ", " + parking_lot.house,
+            "address": parking_lot.city + ", " + parking_lot.street + ", " + str(parking_lot.house),
             "rows": result_rows
         })
 
