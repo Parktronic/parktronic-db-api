@@ -53,7 +53,7 @@ def insert_or_update_parking_lot(db: Session, parking_lot: schemas.ParkingLotReq
             parking_lot_db = models.ParkingLot()
             db.add(parking_lot_db)
 
-        parking_lot_db.coordinates = parking_lot.coordinates
+        parking_lot_db.coordinates = parking_lot.coords
         parking_lot_db.description = parking_lot.description
         parking_lot_db.city = parking_lot.city
         parking_lot_db.street = parking_lot.street

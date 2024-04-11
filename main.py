@@ -40,21 +40,21 @@ def random_cookie(length=10) -> str:
     return cookie_value
 
 
-@app.get("/parking_lots", response_model=ParkingLots)
+@app.get("/api/parking_lots", response_model=ParkingLots)
 def get_parking_lots(response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     return crud.select_parking_lots(db)
 
 
-@app.post("/parking_lot", response_model=ID)
+@app.post("/api/parking_lot", response_model=ID)
 def update_parking_lot(parking_lot: ParkingLotRequest, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     return crud.insert_or_update_parking_lot(db, parking_lot)
 
 
-@app.post("/signup", response_model=User)
+@app.post("/api/signup", response_model=User)
 def sign_up(user: UserSignup, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
@@ -87,7 +87,7 @@ def sign_up(user: UserSignup, request: Request, response: Response, db: Session 
     }
 
 
-@app.post("/login", response_model=User)
+@app.post("/api/login", response_model=User)
 def log_in(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
@@ -118,7 +118,7 @@ def log_in(user: UserLogin, request: Request, response: Response, db: Session = 
     }
 
 
-@app.get("/is_authorized", response_model=User)
+@app.get("/api/is_authorized", response_model=User)
 def is_user_authorized(request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
@@ -139,7 +139,7 @@ def is_user_authorized(request: Request, response: Response, db: Session = Depen
     }
 
 
-@app.post("/logout")
+@app.post("/api/logout")
 def log_out(request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
@@ -155,7 +155,7 @@ def log_out(request: Request, response: Response, db: Session = Depends(get_db))
     response.delete_cookie("session_id")
 
 
-@app.post("/favorite", response_model=User)
+@app.post("/api/favorite", response_model=User)
 def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
@@ -179,7 +179,7 @@ def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Res
     }
 
 
-@app.delete("/favorite", response_model=User)
+@app.delete("/api/favorite", response_model=User)
 def delete_favorite(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
