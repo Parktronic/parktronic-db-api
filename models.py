@@ -65,3 +65,25 @@ class Favorite(Base):
 
     user = relationship("User", back_populates="favorites")
     parking_lot = relationship("ParkingLot", back_populates="favorites")
+
+
+class PredictionInfo(Base):
+    __tablename__ = "prediction_info"
+
+    id = Column(Integer, primary_key=True)
+
+    time = Column(String, nullable=False)
+    day = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    weekday = Column(String, nullable=False)
+
+    weather = Column(String, nullable=False)
+    temperature = Column(Integer, nullable=False)
+    wind = Column(Float, nullable=False)
+
+    id_parking = Column(Integer,
+                        ForeignKey("parking_lots.id", ondelete="CASCADE"),
+                        nullable=False)
+    coords = Column(ARRAY(Float), nullable=False)
+    count_lots = Column(Integer, nullable=False)
+    free_places = Column(Integer, nullable=False)
