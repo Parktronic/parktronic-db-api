@@ -1,5 +1,6 @@
 annotated-types==0.6.0
 anyio==4.3.0
+apscheduler==3.10.4
 click==8.1.7
 exceptiongroup==1.2.0
 fastapi==0.110.1

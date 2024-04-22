@@ -7,6 +7,8 @@ from schemas import ParkingLotRequest, ParkingLots, UserLogin, UserSignup, User,
 from database import SessionLocal, engine
 import crud, models, schemas
 from sqlalchemy.orm import Session
+from scheduler import shutdown_scheduler
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -198,3 +200,9 @@ def delete_favorite(parking_lot_id: ID, request: Request, response: Response, db
         "username": user_db.username,
         "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
     }
+
+
+# Вызываем shutdown_scheduler() при остановке сервера FastAPI
+@app.on_event("shutdown")
+async def shutdown_event():
+    shutdown_scheduler()
