@@ -147,3 +147,58 @@ def delete_favorite(db: Session, user_id: int, parking_lot_id: int):
 
     db.delete(favorite_db)
     db.commit()
+
+
+def select_all_parkings_id(db: Session):
+    '''
+    Получить все уникальные идентификаторы парковок.
+    '''
+    parking_ids = db.query(models.ParkingLot.id).distinct().all()
+    unique_parking_ids = [id[0] for id in parking_ids]
+
+    return unique_parking_ids
+
+
+def select_parking_lots_by_id(db: Session,
+                              parking_id: int):
+    '''
+    Получить информацию о парковке по идентификатору.
+    '''
+    parking_info = db.query(models.ParkingLot).where(models.ParkingLot.id == parking_id).first()
+
+    return {
+        "id": parking_info.id,
+        "coordinates": parking_info.coordinates,
+        "description": parking_info.description,
+        "city": parking_info.city,
+        "street": parking_info.street,
+        "house": parking_info.house
+    }
+
+
+def select_all_views_by_parking_id(db: Session,
+                                   parking_id: int):
+    '''
+    Получить все views по идентификатору парковки.
+    '''
+    views = db.query(models.View).where(models.View.parking_lot_id == parking_id).all()
+
+    return views
+
+
+def select_last_row_info_by_view_id(db: Session,
+                                    view_id: int):
+    '''
+    Получить информацию о последней записи в таблицу rows
+    по идентификатору view.
+    '''
+    # В rows и так перезаписываются записи => можно не искать последнюю
+    row = db.query(models.Row).where(models.Row.view_id == view_id).first()
+
+    return {
+        "id": row.id,
+        "view_id": row.view_id,
+        "coords": [row.coordinate_1, row.coordinate_2, row.coordinate_3],
+        "capacity": row.capacity,
+        "free_places": row.free_places
+    }
