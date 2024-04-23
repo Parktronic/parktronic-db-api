@@ -13,7 +13,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=["http://localhost:8080", "http://79.174.91.217"],
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
     allow_headers=["Content-Type",
@@ -22,7 +22,7 @@ app.add_middleware(
                    "Access-Control-Allow-Origin",
                    "Authorization"]
 )
-CORS_HEADER = "http://localhost:8080"
+CORS_HEADER = "http://79.174.91.217"
 
 cookies = {}
 
@@ -44,6 +44,8 @@ def random_cookie(length=10) -> str:
 def get_parking_lots(response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
+    print(cookies)
+
     return crud.select_parking_lots(db)
 
 
@@ -51,12 +53,16 @@ def get_parking_lots(response: Response, db: Session = Depends(get_db)):
 def update_parking_lot(parking_lot: ParkingLotRequest, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
+    print(cookies)
+
     return crud.insert_or_update_parking_lot(db, parking_lot)
 
 
 @app.post("/api/signup", response_model=User)
 def sign_up(user: UserSignup, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
 
     if crud.select_user_by_email(db, user.email) is not None:
         raise HTTPException(409)
@@ -77,8 +83,6 @@ def sign_up(user: UserSignup, request: Request, response: Response, db: Session 
 
     user_db = crud.select_user_by_id(db, user_id)
 
-    print(cookies)
-
     return {
         "email": user_db.email,
         "first_name": user_db.first_name,
@@ -90,6 +94,8 @@ def sign_up(user: UserSignup, request: Request, response: Response, db: Session 
 @app.post("/api/login", response_model=User)
 def log_in(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
 
     user_db = crud.select_user_by_email_and_password(db, user.email, user.password)
 
@@ -108,8 +114,6 @@ def log_in(user: UserLogin, request: Request, response: Response, db: Session = 
                         httponly=True)
     cookies[cookie] = user_db.id
 
-    print(cookies)
-
     return {
         "email": user_db.email,
         "first_name": user_db.first_name,
@@ -122,14 +126,14 @@ def log_in(user: UserLogin, request: Request, response: Response, db: Session = 
 def is_user_authorized(request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
+    print(cookies)
+
     if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
         raise HTTPException(401)
 
     user_id = cookies[request.cookies["session_id"]]
 
     user_db = crud.select_user_by_id(db, user_id)
-
-    print(cookies)
 
     return {
         "email": user_db.email,
@@ -143,6 +147,8 @@ def is_user_authorized(request: Request, response: Response, db: Session = Depen
 def log_out(request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
+    print(cookies)
+
     if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
         raise HTTPException(401)
 
@@ -150,14 +156,14 @@ def log_out(request: Request, response: Response, db: Session = Depends(get_db))
     if cookie_value in cookies.keys():
         del cookies[cookie_value]
 
-    print(cookies)
-
     response.delete_cookie("session_id")
 
 
 @app.post("/api/favorite", response_model=User)
 def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
 
     if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
         raise HTTPException(401)
@@ -182,6 +188,8 @@ def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Res
 @app.delete("/api/favorite", response_model=User)
 def delete_favorite(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
 
     if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
         raise HTTPException(401)
