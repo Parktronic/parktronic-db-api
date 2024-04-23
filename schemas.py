@@ -53,11 +53,11 @@ class UserLogin(UserPassword, UserEmail):
     pass
 
 
-class UserSignup(UserLogin, UserNames):
+class UserSignup(UserLogin):
     pass
 
 
-class User(UserEmail, UserNames):
+class User(UserEmail):
     parking_lots: List[int]
 
 
