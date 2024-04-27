@@ -49,8 +49,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     email = Column(String, nullable=False)
-    first_name = Column(String, nullable=False)
-    username = Column(String, nullable=False)
+    first_name = Column(String, nullable=True)
+    username = Column(String, nullable=True)
     password = Column(String, nullable=False)
 
     favorites = relationship("Favorite", back_populates="user")

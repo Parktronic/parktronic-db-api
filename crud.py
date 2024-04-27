@@ -97,8 +97,6 @@ def select_user_by_email(db: Session, email: str):
 def insert_user(db: Session, user: schemas.UserSignup):
     user_db = models.User(
         email=user.email,
-        first_name=user.first_name,
-        username=user.username,
         password=user.password
     )
 
