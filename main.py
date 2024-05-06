@@ -2,33 +2,19 @@ import os
 import random
 import string
 from typing import List, Dict, Any
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from database import ParktronicDatabase
-from models import ParkingInfo, ParkingID, User, UserSignup, ParkingLotID, UserParkings
-from dotenv import load_dotenv
-from pathlib import Path
+from schemas import ParkingLotRequest, ParkingLots, UserLogin, UserSignup, User, ID
+from database import SessionLocal, engine
+import crud, models, schemas
+from sqlalchemy.orm import Session
 
+models.Base.metadata.create_all(bind=engine)
 
-load_dotenv()
-
-BASE_DIR = Path(__file__).parent
-
-DB_NAME: str = os.getenv("DB_NAME")
-DB_USER: str = os.getenv("DB_USER")
-DB_PASS: str = os.getenv("DB_PASS")
-DB_HOST: str = os.getenv("DB_HOST")
-DB_PORT: int = os.getenv("DB_PORT")
-
-database = ParktronicDatabase(DB_NAME,
-                              DB_USER,
-                              DB_PASS,
-                              DB_HOST,
-                              DB_PORT)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=["http://localhost:8080", "http://79.174.91.217"],
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
     allow_headers=["Content-Type",
@@ -37,25 +23,16 @@ app.add_middleware(
                    "Access-Control-Allow-Origin",
                    "Authorization"]
 )
-CORS_HEADER = "http://localhost:8080"
+CORS_HEADER = "http://79.174.91.217"
+
 cookies = {}
 
-
-@app.post("/parking_lot")
-def post_parking_lot(data: ParkingInfo, response: Response) -> ParkingID:
-    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
-
-    parking_lot_id = database.update_parking_lot(data.parking_lot())
-    view_id = database.update_view(parking_lot_id, data.view())
-    database.update_rows(view_id, data.rows)
-    return ParkingID(id=parking_lot_id)
-
-
-@app.get("/parking_lots")
-def get_parking_lots(response: Response) -> Dict[str, List[Dict[str, Any]]]:
-    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
-
-    return database.select_parking_lots()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 def random_cookie(length=10) -> str:
@@ -64,145 +41,169 @@ def random_cookie(length=10) -> str:
     return cookie_value
 
 
-@app.post("/signup")
-def post_signup(user: UserSignup, request: Request, response: Response):
-    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
-
-    if database.select_user_by_email(user) != []:
-        raise HTTPException(409, "User already registered")
-
-    user_id = database.insert_user(user)
-
-    if "session_id" not in request.cookies:
-        cookie = random_cookie()
-        response.set_cookie(key="session_id",
-                            value=cookie,
-                            expires=2500,
-                            httponly=True)
-        cookies[cookie] = user_id
-
-    user = database.select_user_by_id(user_id)
-
-    parkings = database.select_favorites(user_id)
-
-    return UserParkings(email=user[1],
-                        first_name=user[2],
-                        username=user[3],
-                        password=user[4],
-                        parkings=parkings)
-
-
-@app.post("/login")
-def post_login(user: User, request: Request, response: Response):
-    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
-
-    user_id = database.select_user(user)
-
-    if user_id == []:
-        raise HTTPException(404, "User not found")
-
-    if "session_id" not in request.cookies:
-        cookie = random_cookie()
-        response.set_cookie(key="session_id",
-                            value=cookie,
-                            expires=2500,
-                            httponly=True)
-        cookies[cookie] = user_id
-
-    user = database.select_user_by_id(user_id)
-
-    parkings = database.select_favorites(user_id)
-
-    return UserParkings(email=user[1],
-                        first_name=user[2],
-                        username=user[3],
-                        password=user[4],
-                        parkings=parkings)
-
-
-@app.get("/is_authorized")
-def get_is_authorized(request: Request, response: Response):
+@app.get("/api/parking_lots", response_model=ParkingLots)
+def get_parking_lots(response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
     print(cookies)
 
-    if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not authorized")
-
-    cookie = request.cookies["session_id"]
-
-    user_id = cookies[cookie]
-
-    user = database.select_user_by_id(user_id)
-
-    parkings = database.select_favorites(user_id)
-
-    return UserParkings(email=user[1],
-                        first_name=user[2],
-                        username=user[3],
-                        password=user[4],
-                        parkings=parkings)
+    return crud.select_parking_lots(db)
 
 
-@app.post("/logout")
-def post_logout(request: Request, response: Response):
+@app.post("/api/parking_lot", response_model=ID)
+def update_parking_lot(parking_lot: ParkingLotRequest, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not authorized")
+    print(cookies)
+
+    return crud.insert_or_update_parking_lot(db, parking_lot)
+
+
+@app.post("/api/signup", response_model=User)
+def sign_up(user: UserSignup, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
+
+    if crud.select_user_by_email(db, user.email) is not None:
+        raise HTTPException(409)
+
+    user_id = crud.insert_user(db, user)
+
+    if "session_id" in request.cookies:
+        cookie_value = request.cookies["session_id"]
+        if cookie_value in cookies.keys():
+            del cookies[cookie_value]
+
+    cookie = random_cookie()
+    response.set_cookie(key="session_id",
+                        value=cookie,
+                        expires=2500,
+                        httponly=True)
+    cookies[cookie] = user_id
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
+
+
+@app.post("/api/login", response_model=User)
+def log_in(user: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
+
+    user_db = crud.select_user_by_email_and_password(db, user.email, user.password)
+
+    if user_db is None:
+        raise HTTPException(404)
+
+    if "session_id" in request.cookies:
+        cookie_value = request.cookies["session_id"]
+        if cookie_value in cookies.keys():
+            del cookies[cookie_value]
+
+    cookie = random_cookie()
+    response.set_cookie(key="session_id",
+                        value=cookie,
+                        expires=2500,
+                        httponly=True)
+    cookies[cookie] = user_db.id
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
+
+
+@app.get("/api/is_authorized", response_model=User)
+def is_user_authorized(request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    user_id = cookies[request.cookies["session_id"]]
+
+    user_db = crud.select_user_by_id(db, user_id)
+
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
+
+
+@app.post("/api/logout")
+def log_out(request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
+
+    print(cookies)
+
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
+
+    cookie_value = request.cookies["session_id"]
+    if cookie_value in cookies.keys():
+        del cookies[cookie_value]
 
     response.delete_cookie("session_id")
 
-    cookie = request.cookies["session_id"]
 
-    del cookies[cookie]
-
-    return {"message": "Successfully logged out"}
-
-
-@app.post("/favorite")
-def post_favorite(parking_lot_id: ParkingLotID, request: Request, response: Response):
+@app.post("/api/favorite", response_model=User)
+def add_favorite_parking_lot(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not found")
+    print(cookies)
 
-    cookie = request.cookies["session_id"]
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
 
-    user_id = cookies[cookie]
+    user_id = cookies[request.cookies["session_id"]]
 
-    database.insert_favorite(user_id, parking_lot_id.parking_lot_id)
+    if crud.select_favorite(db, user_id, parking_lot_id.id) is not None:
+        raise HTTPException(422)
 
-    user = database.select_user_by_id(user_id)
+    crud.insert_favorite(db, user_id, parking_lot_id.id)
 
-    parkings = database.select_favorites(user_id)
+    user_db = crud.select_user_by_id(db, user_id)
 
-    return UserParkings(email=user[1],
-                        first_name=user[2],
-                        username=user[3],
-                        password=user[4],
-                        parkings=parkings)
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
 
 
-@app.delete("/favorite")
-def delete_favorite(parking_lot_id: ParkingLotID, request: Request, response: Response):
+@app.delete("/api/favorite", response_model=User)
+def delete_favorite(parking_lot_id: ID, request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Access-Control-Allow-Origin"] = CORS_HEADER
 
-    if "session_id" not in request.cookies:
-        raise HTTPException(401, "User not found")
-    
-    cookie = request.cookies["session_id"]
+    print(cookies)
 
-    user_id = cookies[cookie]
+    if "session_id" not in request.cookies or request.cookies["session_id"] not in cookies.keys():
+        raise HTTPException(401)
 
-    database.delete_favorite(user_id, parking_lot_id.parking_lot_id)
+    user_id = cookies[request.cookies["session_id"]]
 
-    user = database.select_user_by_id(user_id)
+    crud.delete_favorite(db, user_id, parking_lot_id.id)
 
-    parkings = database.select_favorites(user_id)
+    user_db = crud.select_user_by_id(db, user_id)
 
-    return UserParkings(email=user[1],
-                        first_name=user[2],
-                        username=user[3],
-                        password=user[4],
-                        parkings=parkings)
+    return {
+        "email": user_db.email,
+        "first_name": user_db.first_name,
+        "username": user_db.username,
+        "parking_lots": [favorite.parking_lot_id for favorite in user_db.favorites]
+    }
